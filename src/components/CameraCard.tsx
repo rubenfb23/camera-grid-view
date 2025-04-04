@@ -1,10 +1,11 @@
 
-import React from 'react';
-import { Battery, BatteryCharging, CloudDownload, CloudOff, WifiOff, CheckCircle2, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Battery, BatteryCharging, CloudDownload, CloudOff, WifiOff, CheckCircle2, AlertTriangle, Camera } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export type CameraStatus = 'downloading' | 'downloaded' | 'recording' | 'idle' | 'error';
 
@@ -14,17 +15,19 @@ export interface CameraData {
   batteryLevel: number;
   isCharging: boolean;
   status: CameraStatus;
-  downloadProgress?: number; // Added download progress
+  downloadProgress?: number;
   errorMessage?: string;
   lastUpdated: Date;
-  previewUrl: string;
+  assignedKart?: number;
+  videoTimestamp?: string;
 }
 
 interface CameraCardProps {
   camera: CameraData;
+  onKartAssign?: (cameraId: number, kartId: number) => void;
 }
 
-export const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
+export const CameraCard: React.FC<CameraCardProps> = ({ camera, onKartAssign }) => {
   const getBatteryColor = (level: number) => {
     if (level < 20) return 'text-error';
     if (level < 50) return 'text-warning';
@@ -82,28 +85,29 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
     }
   };
 
+  const handleKartAssignment = (kartId: string) => {
+    if (onKartAssign) {
+      onKartAssign(camera.id, parseInt(kartId));
+    }
+  };
+
   return (
     <Card className="overflow-hidden flex flex-col h-full border-gray-200 shadow-sm">
-      <div className="relative">
-        {camera.previewUrl ? (
-          <img
-            src={camera.previewUrl}
-            alt={`Cámara ${camera.name}`}
-            className="w-full aspect-video object-cover bg-gray-800"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full aspect-video bg-gray-800 flex items-center justify-center">
-            <WifiOff className="h-10 w-10 text-gray-500" />
-          </div>
-        )}
-        
+      <div className="relative p-4 bg-gray-100 flex flex-col items-center justify-center aspect-video">
         <div className="absolute top-2 left-2">
           {getStatusBadge(camera.status)}
         </div>
         
         <div className="absolute top-2 right-2 bg-black/70 rounded px-2 py-1 text-xs text-white">
-          {camera.name}
+          ID: {camera.name}
+        </div>
+        
+        <div className="flex flex-col items-center justify-center">
+          <Camera className="h-16 w-16 text-blue-600 mb-2" />
+          <div className="text-center">
+            <div className="font-bold text-blue-800">RunCam 6</div>
+            <div className="text-sm text-gray-600">Cámara de Acción</div>
+          </div>
         </div>
       </div>
 
@@ -128,6 +132,27 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
         {camera.status === 'downloading' && camera.downloadProgress !== undefined && (
           <div className="mt-1">
             <Progress value={camera.downloadProgress} className="h-2" />
+          </div>
+        )}
+
+        {camera.status === 'downloaded' && (
+          <div className="mt-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Asignar a Kart:</label>
+            <Select 
+              onValueChange={handleKartAssignment} 
+              value={camera.assignedKart?.toString() || ""}
+            >
+              <SelectTrigger className="w-full h-8 text-sm">
+                <SelectValue placeholder="Seleccionar Kart" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 10 }, (_, i) => (
+                  <SelectItem key={i+1} value={(i+1).toString()}>
+                    Kart {i+1}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
         

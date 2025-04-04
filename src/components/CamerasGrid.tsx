@@ -13,8 +13,22 @@ const initialCamerasData: CameraData[] = Array.from({ length: 10 }, (_, index) =
   downloadProgress: undefined,
   errorMessage: undefined,
   lastUpdated: new Date(),
-  previewUrl: `https://picsum.photos/seed/${index + 1}/640/360`
+  assignedKart: undefined,
+  videoTimestamp: undefined
 }));
+
+// Lista para almacenar los videos descargados
+export interface DownloadedVideo {
+  id: string;
+  cameraId: number;
+  cameraName: string;
+  timestamp: string;
+  assignedKart?: number;
+  fileName: string;
+}
+
+// Almacén global de videos descargados
+export const downloadedVideos: DownloadedVideo[] = [];
 
 const CamerasGrid: React.FC = () => {
   const [cameras, setCameras] = useState<CameraData[]>(initialCamerasData);
@@ -44,6 +58,36 @@ const CamerasGrid: React.FC = () => {
       title: `Error: ${camera.name}`,
       description: errorMessage,
       variant: "destructive",
+    });
+  };
+
+  // Asignar un kart a una cámara específica
+  const handleKartAssign = (cameraId: number, kartId: number) => {
+    setCameras(prevCameras => 
+      prevCameras.map(camera => {
+        if (camera.id === cameraId) {
+          // Actualizar el video descargado con la asignación de kart
+          const matchingVideo = downloadedVideos.find(
+            video => video.cameraId === cameraId && !video.assignedKart
+          );
+          
+          if (matchingVideo) {
+            matchingVideo.assignedKart = kartId;
+          }
+          
+          // Actualizar la cámara
+          return {
+            ...camera,
+            assignedKart: kartId
+          };
+        }
+        return camera;
+      })
+    );
+    
+    toastRef.current({
+      title: `Video asignado`,
+      description: `Cámara ${cameraId} asignada al Kart ${kartId}`,
     });
   };
 
@@ -113,6 +157,21 @@ const CamerasGrid: React.FC = () => {
               updates.status = 'downloaded';
               updates.downloadProgress = undefined;
               
+              // Crear timestamp para el video
+              const videoTimestamp = new Date().toISOString();
+              updates.videoTimestamp = videoTimestamp;
+              
+              // Agregar a la lista de videos descargados
+              const videoId = `video-${Date.now()}-${camera.id}`;
+              downloadedVideos.push({
+                id: videoId,
+                cameraId: camera.id,
+                cameraName: camera.name,
+                timestamp: videoTimestamp,
+                fileName: `video-${camera.id}-${Date.now()}.mp4`,
+                assignedKart: camera.assignedKart
+              });
+              
               // Notificar descarga completada (fuera del ciclo de renderizado)
               setTimeout(() => {
                 toastRef.current({
@@ -166,7 +225,11 @@ const CamerasGrid: React.FC = () => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
       {cameras.map(camera => (
-        <CameraCard key={camera.id} camera={camera} />
+        <CameraCard 
+          key={camera.id} 
+          camera={camera} 
+          onKartAssign={handleKartAssign} 
+        />
       ))}
     </div>
   );
