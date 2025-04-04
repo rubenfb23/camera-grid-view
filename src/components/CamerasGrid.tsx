@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CameraCard, CameraData } from './CameraCard';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // Mock data para las cámaras
 const initialCamerasData: CameraData[] = Array.from({ length: 10 }, (_, index) => ({
@@ -9,8 +9,9 @@ const initialCamerasData: CameraData[] = Array.from({ length: 10 }, (_, index) =
   name: `Cámara ${index + 1}`,
   batteryLevel: Math.floor(Math.random() * 100),
   isCharging: Math.random() > 0.7,
-  status: ['downloading', 'downloaded', 'recording', 'idle', 'error'][Math.floor(Math.random() * 5)] as CameraData['status'],
-  errorMessage: Math.random() > 0.8 ? 'Conexión perdida' : undefined,
+  status: ['idle', 'idle', 'recording', 'idle', 'idle'][Math.floor(Math.random() * 5)] as CameraData['status'],
+  downloadProgress: undefined,
+  errorMessage: undefined,
   lastUpdated: new Date(),
   previewUrl: `https://picsum.photos/seed/${index + 1}/640/360`
 }));
@@ -19,12 +20,65 @@ const CamerasGrid: React.FC = () => {
   const [cameras, setCameras] = useState<CameraData[]>(initialCamerasData);
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const { toast } = useToast();
+  
+  // Referencias para mantener las notificaciones fuera del ciclo de renderizado
+  const toastRef = useRef(toast);
+  const camerasRef = useRef(cameras);
+  
+  useEffect(() => {
+    camerasRef.current = cameras;
+  }, [cameras]);
+
+  // Mostrar notificación de batería baja
+  const showLowBatteryNotification = (camera: CameraData) => {
+    toastRef.current({
+      title: `Batería baja: ${camera.name}`,
+      description: `Nivel de batería: ${camera.batteryLevel}%`,
+      variant: "destructive",
+    });
+  };
+  
+  // Mostrar notificación de error
+  const showErrorNotification = (camera: CameraData, errorMessage: string) => {
+    toastRef.current({
+      title: `Error: ${camera.name}`,
+      description: errorMessage,
+      variant: "destructive",
+    });
+  };
 
   // Simulación de WebSocket para actualizaciones en tiempo real
   useEffect(() => {
-    // Normalmente conectaríamos a un WebSocket real aquí
-    // socket = new WebSocket('ws://yourserver.com/cameras');
     console.log('Conectando al WebSocket para actualizaciones de cámaras...');
+    
+    // Simular detección de nuevas cámaras ocasionalmente
+    const detectNewCamerasInterval = setInterval(() => {
+      const shouldSimulateNewDownload = Math.random() > 0.8;
+      
+      if (shouldSimulateNewDownload) {
+        const randomCameraIndex = Math.floor(Math.random() * camerasRef.current.length);
+        
+        setCameras(prevCameras => 
+          prevCameras.map((camera, index) => {
+            if (index === randomCameraIndex && camera.status !== 'downloading' && camera.status !== 'error') {
+              // Iniciar proceso de descarga
+              toastRef.current({
+                title: `Nueva descarga iniciada`,
+                description: `${camera.name} ha comenzado a descargar un video`,
+              });
+              
+              return {
+                ...camera,
+                status: 'downloading',
+                downloadProgress: 0,
+                lastUpdated: new Date()
+              };
+            }
+            return camera;
+          })
+        );
+      }
+    }, 10000);
     
     // Simulamos actualizaciones periódicas
     const intervalId = setInterval(() => {
@@ -43,31 +97,50 @@ const CamerasGrid: React.FC = () => {
             }
             updates.batteryLevel = newBatteryLevel;
 
-            // Notificar batería baja
+            // Notificar batería baja (fuera del ciclo de renderizado)
             if (newBatteryLevel < 20 && camera.batteryLevel >= 20) {
-              toast({
-                title: `Batería baja: ${camera.name}`,
-                description: `Nivel de batería: ${newBatteryLevel}%`,
-                variant: "destructive",
-              });
+              setTimeout(() => showLowBatteryNotification(camera), 0);
             }
           }
           
-          // Cambio de estado ocasional
-          if (Math.random() > 0.9) {
-            updates.status = ['downloading', 'downloaded', 'recording', 'idle', 'error'][Math.floor(Math.random() * 5)] as CameraData['status'];
+          // Progreso de descarga
+          if (camera.status === 'downloading' && camera.downloadProgress !== undefined) {
+            const newProgress = Math.min(100, camera.downloadProgress + Math.floor(Math.random() * 10));
+            updates.downloadProgress = newProgress;
             
-            // Error aleatorio
-            if (updates.status === 'error' && Math.random() > 0.5) {
-              updates.errorMessage = ['Conexión perdida', 'Error de grabación', 'Almacenamiento lleno'][Math.floor(Math.random() * 3)];
+            // Si la descarga se completa
+            if (newProgress >= 100) {
+              updates.status = 'downloaded';
+              updates.downloadProgress = undefined;
               
-              toast({
-                title: `Error: ${camera.name}`,
-                description: updates.errorMessage,
-                variant: "destructive",
-              });
-            } else {
-              updates.errorMessage = undefined;
+              // Notificar descarga completada (fuera del ciclo de renderizado)
+              setTimeout(() => {
+                toastRef.current({
+                  title: `Descarga completada`,
+                  description: `${camera.name} ha finalizado la descarga del video`,
+                });
+              }, 0);
+            }
+          }
+          
+          // Cambio de estado ocasional o error
+          if (Math.random() > 0.95) {
+            if (camera.status !== 'downloading') {
+              updates.status = ['idle', 'recording', 'error'][Math.floor(Math.random() * 3)] as CameraData['status'];
+            
+              // Error aleatorio
+              if (updates.status === 'error' && Math.random() > 0.5) {
+                updates.errorMessage = ['Conexión perdida', 'Error de grabación', 'Almacenamiento lleno'][Math.floor(Math.random() * 3)];
+                
+                // Notificar error (fuera del ciclo de renderizado)
+                setTimeout(() => {
+                  if (updates.errorMessage) {
+                    showErrorNotification(camera, updates.errorMessage);
+                  }
+                }, 0);
+              } else {
+                updates.errorMessage = undefined;
+              }
             }
           }
           
@@ -83,11 +156,12 @@ const CamerasGrid: React.FC = () => {
     // Limpieza al desmontar
     return () => {
       clearInterval(intervalId);
+      clearInterval(detectNewCamerasInterval);
       if (socket) {
         socket.close();
       }
     };
-  }, [toast]);
+  }, []);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">

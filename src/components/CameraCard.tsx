@@ -2,6 +2,8 @@
 import React from 'react';
 import { Battery, BatteryCharging, CloudDownload, CloudOff, WifiOff, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export type CameraStatus = 'downloading' | 'downloaded' | 'recording' | 'idle' | 'error';
@@ -12,6 +14,7 @@ export interface CameraData {
   batteryLevel: number;
   isCharging: boolean;
   status: CameraStatus;
+  downloadProgress?: number; // Added download progress
   errorMessage?: string;
   lastUpdated: Date;
   previewUrl: string;
@@ -46,7 +49,9 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
   const getStatusText = (status: CameraStatus) => {
     switch (status) {
       case 'downloading':
-        return 'Descargando video';
+        return camera.downloadProgress !== undefined 
+          ? `Descargando - ${camera.downloadProgress}%` 
+          : 'Descargando video';
       case 'downloaded':
         return 'Video descargado';
       case 'recording':
@@ -57,6 +62,23 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
         return 'Error';
       default:
         return '';
+    }
+  };
+
+  const getStatusBadge = (status: CameraStatus) => {
+    switch (status) {
+      case 'downloading':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">Descargando</Badge>;
+      case 'downloaded':
+        return <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">Completado</Badge>;
+      case 'recording':
+        return <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">Grabando</Badge>;
+      case 'error':
+        return <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">Error</Badge>;
+      case 'idle':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-200">Inactivo</Badge>;
+      default:
+        return null;
     }
   };
 
@@ -75,6 +97,10 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
             <WifiOff className="h-10 w-10 text-gray-500" />
           </div>
         )}
+        
+        <div className="absolute top-2 left-2">
+          {getStatusBadge(camera.status)}
+        </div>
         
         <div className="absolute top-2 right-2 bg-black/70 rounded px-2 py-1 text-xs text-white">
           {camera.name}
@@ -98,6 +124,12 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
             <span className="text-sm text-gray-600">{getStatusText(camera.status)}</span>
           </div>
         </div>
+        
+        {camera.status === 'downloading' && camera.downloadProgress !== undefined && (
+          <div className="mt-1">
+            <Progress value={camera.downloadProgress} className="h-2" />
+          </div>
+        )}
         
         {camera.errorMessage && (
           <div className="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-sm">
