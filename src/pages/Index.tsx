@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import Header from '@/components/Header';
 import CamerasGrid from '@/components/CamerasGrid';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -25,13 +26,15 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-      <main className={`flex-grow p-3 ${isMobile ? 'p-2' : 'md:p-4 lg:p-6'} overflow-auto`}>
-        <div className="mb-3 md:mb-4">
-          <h2 className="text-lg font-medium text-gray-800">Estado de Cámaras</h2>
-          <p className="text-sm text-gray-500">Monitoreo de 10 cámaras conectadas</p>
-        </div>
-        <CamerasGrid />
-      </main>
+      <ScrollArea className="flex-grow">
+        <main className={`p-3 ${isMobile ? 'p-2' : 'md:p-4 lg:p-6'}`}>
+          <div className="mb-3 md:mb-4">
+            <h2 className="text-lg font-medium text-gray-800">Estado de Cámaras</h2>
+            <p className="text-sm text-gray-500">Monitoreo de 10 cámaras conectadas</p>
+          </div>
+          <CamerasGrid />
+        </main>
+      </ScrollArea>
     </div>
   );
 };

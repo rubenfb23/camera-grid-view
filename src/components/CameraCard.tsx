@@ -117,57 +117,57 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera, onKartAssign }) 
         <div className="flex flex-col items-center justify-center">
           <Camera className="h-16 w-16 text-blue-600 mb-2" />
           <div className="text-center">
-            <div className="font-bold text-blue-800">RunCam 6</div>
+            <div className="font-bold text-blue-800 text-base">RunCam 6</div>
             <div className="text-sm text-gray-600">Cámara de Acción</div>
           </div>
         </div>
       </div>
 
-      <div className="p-3 flex-grow flex flex-col gap-2">
+      <div className="p-4 flex-grow flex flex-col gap-2">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-1">
             {camera.isCharging ? (
-              <BatteryCharging className={cn("h-5 w-5", getBatteryColor(camera.batteryLevel))} />
+              <BatteryCharging className={cn("h-6 w-6", getBatteryColor(camera.batteryLevel))} />
             ) : (
-              <Battery className={cn("h-5 w-5", getBatteryColor(camera.batteryLevel))} />
+              <Battery className={cn("h-6 w-6", getBatteryColor(camera.batteryLevel))} />
             )}
-            <span className={cn("text-sm font-medium", getBatteryColor(camera.batteryLevel))}>
+            <span className={cn("text-base font-medium", getBatteryColor(camera.batteryLevel))}>
               {camera.batteryLevel}%
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             {getStatusIcon(camera.status)}
-            <span className="text-sm text-gray-600">{getStatusText(camera.status)}</span>
+            <span className="text-base text-gray-600">{getStatusText(camera.status)}</span>
           </div>
         </div>
         
         {camera.status === 'downloading' && camera.downloadProgress !== undefined && (
-          <div className="mt-1">
-            <Progress value={camera.downloadProgress} className="h-2" />
+          <div className="mt-2">
+            <Progress value={camera.downloadProgress} className="h-3" />
           </div>
         )}
 
-        <div className="mt-2 flex items-center gap-2 text-sm">
-          <HardDrive className={`h-4 w-4 ${memoryColor}`} />
+        <div className="mt-2 flex items-center gap-2 text-base">
+          <HardDrive className={`h-5 w-5 ${memoryColor}`} />
           <span className={`${memoryColor} font-medium`}>
             {formatMemory(camera.memoryUsed)}/{formatMemory(camera.memoryTotal)}
           </span>
         </div>
 
         <div className="mt-1">
-          <Progress value={memoryUsagePercentage} className={`h-1.5 ${memoryUsagePercentage > 90 ? 'bg-red-200' : memoryUsagePercentage > 75 ? 'bg-amber-200' : 'bg-green-200'}`} />
+          <Progress value={memoryUsagePercentage} className={`h-2 ${memoryUsagePercentage > 90 ? 'bg-red-200' : memoryUsagePercentage > 75 ? 'bg-amber-200' : 'bg-green-200'}`} />
         </div>
 
-        <div className="mt-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Asignar a Kart:</label>
+        <div className="mt-3">
+          <label className="block text-base font-medium text-gray-700 mb-2">Asignar a Kart:</label>
           <Select 
             onValueChange={handleKartAssignment} 
             value={camera.assignedKart?.toString() || ""}
           >
-            <SelectTrigger className="w-full h-8 text-sm">
+            <SelectTrigger className="w-full h-11 text-base">
               <SelectValue placeholder="Seleccionar Kart" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="select-content">
               {Array.from({ length: 10 }, (_, i) => (
                 <SelectItem key={i+1} value={(i+1).toString()}>
                   Kart {i+1}
@@ -178,9 +178,9 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera, onKartAssign }) 
         </div>
         
         {camera.errorMessage && (
-          <div className="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-sm">
-            <p className="text-xs text-error flex items-center gap-1">
-              <AlertTriangle className="h-3.5 w-3.5" />
+          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-sm">
+            <p className="text-sm text-error flex items-center gap-1">
+              <AlertTriangle className="h-4 w-4" />
               {camera.errorMessage}
             </p>
           </div>

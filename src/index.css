@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -97,5 +98,26 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Estilos para pantallas táctiles */
+@media (pointer: coarse) {
+  * {
+    cursor: none !important;
+  }
+
+  html, body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+    touch-action: pan-y;
+  }
+  
+  button, a, select, input {
+    min-height: 44px; /* Aumentar el área táctil para elementos interactivos */
+  }
+  
+  .select-content {
+    max-height: 300px;
   }
 }
