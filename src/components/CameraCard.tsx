@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Battery, BatteryCharging, CloudDownload, CloudOff, WifiOff, CheckCircle2, AlertTriangle, Camera } from 'lucide-react';
+import { Battery, BatteryCharging, CloudDownload, CloudOff, WifiOff, CheckCircle2, AlertTriangle, Camera, HardDrive } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,8 @@ export interface CameraData {
   lastUpdated: Date;
   assignedKart?: number;
   videoTimestamp?: string;
+  memoryUsed: number;
+  memoryTotal: number;
 }
 
 interface CameraCardProps {
@@ -91,6 +93,16 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera, onKartAssign }) 
     }
   };
 
+  // Format memory display
+  const formatMemory = (bytes: number) => {
+    if (bytes >= 1073741824) return `${(bytes / 1073741824).toFixed(1)} GB`;
+    if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(1)} MB`;
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  };
+
+  const memoryUsagePercentage = (camera.memoryUsed / camera.memoryTotal) * 100;
+  const memoryColor = memoryUsagePercentage > 90 ? "text-error" : memoryUsagePercentage > 75 ? "text-warning" : "text-success";
+
   return (
     <Card className="overflow-hidden flex flex-col h-full border-gray-200 shadow-sm">
       <div className="relative p-4 bg-gray-100 flex flex-col items-center justify-center aspect-video">
@@ -135,26 +147,35 @@ export const CameraCard: React.FC<CameraCardProps> = ({ camera, onKartAssign }) 
           </div>
         )}
 
-        {camera.status === 'downloaded' && (
-          <div className="mt-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Asignar a Kart:</label>
-            <Select 
-              onValueChange={handleKartAssignment} 
-              value={camera.assignedKart?.toString() || ""}
-            >
-              <SelectTrigger className="w-full h-8 text-sm">
-                <SelectValue placeholder="Seleccionar Kart" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 10 }, (_, i) => (
-                  <SelectItem key={i+1} value={(i+1).toString()}>
-                    Kart {i+1}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        <div className="mt-2 flex items-center gap-2 text-sm">
+          <HardDrive className={`h-4 w-4 ${memoryColor}`} />
+          <span className={`${memoryColor} font-medium`}>
+            {formatMemory(camera.memoryUsed)}/{formatMemory(camera.memoryTotal)}
+          </span>
+        </div>
+
+        <div className="mt-1">
+          <Progress value={memoryUsagePercentage} className={`h-1.5 ${memoryUsagePercentage > 90 ? 'bg-red-200' : memoryUsagePercentage > 75 ? 'bg-amber-200' : 'bg-green-200'}`} />
+        </div>
+
+        <div className="mt-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Asignar a Kart:</label>
+          <Select 
+            onValueChange={handleKartAssignment} 
+            value={camera.assignedKart?.toString() || ""}
+          >
+            <SelectTrigger className="w-full h-8 text-sm">
+              <SelectValue placeholder="Seleccionar Kart" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 10 }, (_, i) => (
+                <SelectItem key={i+1} value={(i+1).toString()}>
+                  Kart {i+1}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         
         {camera.errorMessage && (
           <div className="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-sm">

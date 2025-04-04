@@ -3,20 +3,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { CameraCard, CameraData } from './CameraCard';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock data para las cámaras
-const initialCamerasData: CameraData[] = Array.from({ length: 10 }, (_, index) => ({
-  id: index + 1,
-  name: `Cámara ${index + 1}`,
-  batteryLevel: Math.floor(Math.random() * 100),
-  isCharging: Math.random() > 0.7,
-  status: ['idle', 'idle', 'recording', 'idle', 'idle'][Math.floor(Math.random() * 5)] as CameraData['status'],
-  downloadProgress: undefined,
-  errorMessage: undefined,
-  lastUpdated: new Date(),
-  assignedKart: undefined,
-  videoTimestamp: undefined
-}));
-
 // Lista para almacenar los videos descargados
 export interface DownloadedVideo {
   id: string;
@@ -27,8 +13,55 @@ export interface DownloadedVideo {
   fileName: string;
 }
 
-// Almacén global de videos descargados
-export const downloadedVideos: DownloadedVideo[] = [];
+// Mock data para los videos descargados (para probar la funcionalidad)
+export const downloadedVideos: DownloadedVideo[] = [
+  {
+    id: 'video-1234567890',
+    cameraId: 3,
+    cameraName: 'Cámara 3',
+    timestamp: '2025-04-04T08:15:30Z',
+    assignedKart: 5,
+    fileName: 'video-3-20250404-081530.mp4'
+  },
+  {
+    id: 'video-0987654321',
+    cameraId: 7,
+    cameraName: 'Cámara 7',
+    timestamp: '2025-04-04T09:23:45Z',
+    assignedKart: 2,
+    fileName: 'video-7-20250404-092345.mp4'
+  },
+  {
+    id: 'video-5678901234',
+    cameraId: 1,
+    cameraName: 'Cámara 1',
+    timestamp: '2025-04-03T17:45:12Z',
+    fileName: 'video-1-20250403-174512.mp4'
+  }
+];
+
+// Mock data para las cámaras
+const initialCamerasData: CameraData[] = Array.from({ length: 10 }, (_, index) => {
+  // Generar datos aleatorios para la memoria
+  const memoryTotal = 128 * 1024 * 1024 * 1024; // 128 GB en bytes
+  const memoryUsedPercentage = Math.random();
+  const memoryUsed = Math.floor(memoryTotal * memoryUsedPercentage);
+  
+  return {
+    id: index + 1,
+    name: `Cámara ${index + 1}`,
+    batteryLevel: Math.floor(Math.random() * 100),
+    isCharging: Math.random() > 0.7,
+    status: ['idle', 'idle', 'recording', 'idle', 'idle'][Math.floor(Math.random() * 5)] as CameraData['status'],
+    downloadProgress: undefined,
+    errorMessage: undefined,
+    lastUpdated: new Date(),
+    assignedKart: undefined,
+    videoTimestamp: undefined,
+    memoryUsed: memoryUsed,
+    memoryTotal: memoryTotal
+  };
+});
 
 const CamerasGrid: React.FC = () => {
   const [cameras, setCameras] = useState<CameraData[]>(initialCamerasData);
@@ -179,6 +212,15 @@ const CamerasGrid: React.FC = () => {
                   description: `${camera.name} ha finalizado la descarga del video`,
                 });
               }, 0);
+            }
+          }
+          
+          // Actualización aleatoria de uso de memoria
+          if (Math.random() > 0.8) {
+            // Simular cambio en la memoria usado para cámaras que están grabando
+            if (camera.status === 'recording') {
+              const memoryIncrease = 50 * 1024 * 1024; // 50 MB por grabación
+              updates.memoryUsed = Math.min(camera.memoryTotal, camera.memoryUsed + memoryIncrease);
             }
           }
           

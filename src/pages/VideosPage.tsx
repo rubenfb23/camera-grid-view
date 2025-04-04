@@ -1,9 +1,12 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { downloadedVideos } from '@/components/CamerasGrid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const VideosPage = () => {
   const [filterKart, setFilterKart] = useState<string>("all");
@@ -26,9 +29,17 @@ const VideosPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
       <main className="flex-grow p-3 md:p-4 lg:p-6 overflow-auto">
-        <div className="mb-4">
-          <h2 className="text-lg font-medium text-gray-800">Videos Descargados</h2>
-          <p className="text-sm text-gray-500">Listado de videos descargados de las cámaras</p>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-lg font-medium text-gray-800">Videos Descargados</h2>
+            <p className="text-sm text-gray-500">Listado de videos descargados de las cámaras</p>
+          </div>
+          <Link to="/">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" /> 
+              Volver a cámaras
+            </Button>
+          </Link>
         </div>
         
         <div className="mb-4 max-w-xs">
